@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PDFWin (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "PDFWin (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

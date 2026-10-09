@@ -1,0 +1,4 @@
+LIBRARY "PDFWinShellExt"
+EXPORTS
+    DllGetClassObject PRIVATE
+    DllCanUnloadNow   PRIVATE

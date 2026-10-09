@@ -1,0 +1,48 @@
+## .NET / Visual Studio
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+artifacts/
+
+# Build logs and temporary files
+[Ll]og/
+[Ll]ogs/
+*.log
+*.binlog
+*.tmp
+
+# Compiled Binaries & Packages (stored in Releases)
+*.exe
+*.dll
+*.lib
+*.exp
+*.obj
+*.pdb
+*.zip
+*.msix
+*.appx
+publish/
+PDFWin_App/
+PDFWin_App_ToDelete/
+release/
+installer/app.zip
+SparsePackage/*.msix
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+project.lock.json
+
+# IDE & OS
+.idea/
+.vscode/
+desktop.ini
+Thumbs.db
