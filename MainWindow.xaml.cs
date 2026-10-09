@@ -162,6 +162,7 @@ public sealed partial class MainWindow : Window
         {
             _appWindow.Show();
             Win32Helper.SetForegroundWindow(_hwnd);
+            Activate();
             return IntPtr.Zero;
         }
         else if (msg == Win32Helper.WM_HOTKEY)
@@ -281,6 +282,7 @@ public sealed partial class MainWindow : Window
         {
             _appWindow.Show();
             Win32Helper.SetForegroundWindow(_hwnd);
+            Activate();
         }
     }
 
@@ -305,7 +307,7 @@ public sealed partial class MainWindow : Window
         if (e.DataView.Contains(StandardDataFormats.StorageItems))
         {
             e.AcceptedOperation = DataPackageOperation.Copy;
-            e.DragUIOverride.Caption = "Soltar para añadir a PDFWin";
+            e.DragUIOverride.Caption = "Drop to add to PDFWin";
             e.DragUIOverride.IsCaptionVisible = true;
         }
         else
@@ -395,7 +397,7 @@ public sealed partial class MainWindow : Window
         if (DroppedItems.Count == 0) return;
 
         ProcessingOverlay.Visibility = Visibility.Visible;
-        TxtProcessingStatus.Text = "Generando PDF...";
+        TxtProcessingStatus.Text = "Generating PDF...";
 
         try
         {
@@ -424,7 +426,7 @@ public sealed partial class MainWindow : Window
 
         var menu = new MenuFlyout();
 
-        var sortItem = new MenuFlyoutItem { Text = "Ordenar alfabéticamente" };
+        var sortItem = new MenuFlyoutItem { Text = "Sort alphabetically" };
         sortItem.Click += (s, ev) =>
         {
             var sorted = DroppedItems.OrderBy(x => x.FileName, NaturalStringComparer.Instance).ToList();
@@ -434,7 +436,7 @@ public sealed partial class MainWindow : Window
         };
         menu.Items.Add(sortItem);
 
-        var clearItem = new MenuFlyoutItem { Text = "Limpiar todo" };
+        var clearItem = new MenuFlyoutItem { Text = "Clear all" };
         clearItem.Click += (s, ev) =>
         {
             DroppedItems.Clear();

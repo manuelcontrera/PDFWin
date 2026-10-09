@@ -57,7 +57,7 @@
                             Padding="0"
                             Background="Transparent"
                             BorderThickness="0"
-                            ToolTipService.ToolTip="Crear PDF ahora"
+                            ToolTipService.ToolTip="Create PDF now"
                             Click="BtnCreatePdf_Click">
                         <FontIcon Glyph="&#xE896;" FontSize="15" />
                     </Button>
@@ -81,7 +81,7 @@
                             Padding="0"
                             Background="Transparent"
                             BorderThickness="0"
-                            ToolTipService.ToolTip="Cerrar ventana (Win+Alt+P para reabrir)"
+                            ToolTipService.ToolTip="Close window (Win+Alt+P to reopen)"
                             Click="BtnClose_Click">
                         <FontIcon Glyph="&#xE8BB;" FontSize="12" />
                     </Button>
@@ -194,14 +194,14 @@
                                                     Padding="0"
                                                     Background="Transparent"
                                                     BorderThickness="0"
-                                                    ToolTipService.ToolTip="Quitar de la lista"
+                                                    ToolTipService.ToolTip="Remove from list"
                                                     Click="BtnRemoveItem_Click"
                                                     Tag="{Binding}">
                                                 <FontIcon Glyph="&#xE711;" FontSize="11" />
                                             </Button>
                                         </Grid>
                                     </Border>
-                                </DataTemplate>
+                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
                     </Grid>
@@ -215,7 +215,7 @@
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10">
                             <ProgressRing IsActive="True" Width="36" Height="36" />
                             <TextBlock x:Name="TxtProcessingStatus"
-                                       Text="Generando PDF..."
+                                       Text="Generating PDF..."
                                        FontSize="13"
                                        FontWeight="Medium"
                                        HorizontalAlignment="Center" />

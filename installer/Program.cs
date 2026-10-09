@@ -60,7 +60,7 @@ internal static class Program
             {
                 if (stream == null)
                 {
-                    ShowMessage("Error crítico: No se encontró el recurso de instalación embebido.", "Error de Instalación", true, silent);
+                    ShowMessage("Critical error: Embedded installation resource was not found.", "Installation Error", true, silent);
                     return;
                 }
 
@@ -142,10 +142,18 @@ internal static class Program
                 catch { }
             }
 
-            // 7. Register in Windows Add/Remove Programs (Installed Apps)
+            // 7. Register in Windows Startup Apps (Settings > Apps > Startup)
+            try
+            {
+                using var runKey = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run");
+                runKey?.SetValue("PDFWin", $"\"{targetExe}\" --startup");
+            }
+            catch { }
+
+            // 8. Register in Windows Add/Remove Programs (Installed Apps)
             RegisterInControlPanel(targetDir, targetExe);
 
-            // 8. Launch PDFWin
+            // 9. Launch PDFWin
             if (File.Exists(targetExe))
             {
                 Process.Start(new ProcessStartInfo
@@ -157,17 +165,17 @@ internal static class Program
             }
 
             ShowMessage(
-                "¡PDFWin se ha instalado con éxito!\n\n" +
-                "• Icono en la barra de tareas / bandeja del sistema junto al reloj.\n" +
-                "• Atajo global: Win + Alt + P para abrir u ocultar la ventana.\n" +
-                "• Menú contextual: Haz clic derecho sobre cualquier imagen, PDF o carpeta y verás 'Crear PDF con PDFWin' directamente en el menú principal de Windows 11.",
-                "PDFWin - Instalación Completada",
+                "PDFWin has been installed successfully!\n\n" +
+                "• System tray icon next to the taskbar clock.\n" +
+                "• Global shortcut: Win + Alt + P to open or hide the window.\n" +
+                "• Context menu: Right-click any image, PDF or folder and select 'Create PDF' directly in the Windows 11 main menu.",
+                "PDFWin - Installation Completed",
                 false,
                 silent);
         }
         catch (Exception ex)
         {
-            ShowMessage($"Ocurrió un error al instalar PDFWin:\n\n{ex.Message}", "Error de Instalación", true, silent);
+            ShowMessage($"An error occurred while installing PDFWin:\n\n{ex.Message}", "Installation Error", true, silent);
         }
     }
 
@@ -226,7 +234,15 @@ internal static class Program
             }
             catch { }
 
-            // 4. Remove registry entry from Installed Apps
+            // 4. Remove startup entry
+            try
+            {
+                using var runKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
+                runKey?.DeleteValue("PDFWin", false);
+            }
+            catch { }
+
+            // 5. Remove registry entry from Installed Apps
             try
             {
                 using var uninstKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall", true);
@@ -234,12 +250,12 @@ internal static class Program
             }
             catch { }
 
-            // 5. Schedule folder deletion on reboot/exit if needed
-            ShowMessage("PDFWin ha sido desinstalado correctamente de tu equipo.", "PDFWin - Desinstalación", false, silent);
+            // 6. Schedule folder deletion on reboot/exit if needed
+            ShowMessage("PDFWin has been successfully uninstalled from your computer.", "PDFWin - Uninstall", false, silent);
         }
         catch (Exception ex)
         {
-            ShowMessage($"Aviso durante la desinstalación: {ex.Message}", "PDFWin", true, silent);
+            ShowMessage($"Notice during uninstallation: {ex.Message}", "PDFWin", true, silent);
         }
     }
 
@@ -261,7 +277,7 @@ internal static class Program
             desktopShortcut.TargetPath = targetExe;
             desktopShortcut.WorkingDirectory = targetDir;
             desktopShortcut.IconLocation = $"{targetExe},0";
-            desktopShortcut.Description = "PDFWin - Creación y unión de PDFs para Windows 11";
+            desktopShortcut.Description = "PDFWin - Windows 11 PDF Creation and Merge Utility";
             desktopShortcut.Save();
 
             // Start Menu shortcut
@@ -269,7 +285,7 @@ internal static class Program
             startShortcut.TargetPath = targetExe;
             startShortcut.WorkingDirectory = targetDir;
             startShortcut.IconLocation = $"{targetExe},0";
-            startShortcut.Description = "PDFWin - Creación y unión de PDFs para Windows 11";
+            startShortcut.Description = "PDFWin - Windows 11 PDF Creation and Merge Utility";
             startShortcut.Save();
         }
         catch { }

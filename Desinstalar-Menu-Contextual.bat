@@ -1,5 +1,5 @@
 @echo off
-title PDFWin - Desinstalar Menu Contextual Windows 11
+title PDFWin - Uninstall Context Menu & Startup
 cd /d "%~dp0"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Desinstalar-Menu-Contextual.ps1"
 echo.

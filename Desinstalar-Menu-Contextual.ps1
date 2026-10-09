@@ -1,12 +1,17 @@
-# Script para desinstalar PDFWin del Menú Contextual de Windows 11
+# Script to uninstall PDFWin from Windows 11 Context Menu & Startup
 $ErrorActionPreference = "SilentlyContinue"
 
-Write-Host "Desinstalando menú contextual de PDFWin..." -ForegroundColor Cyan
+Write-Host "Uninstalling PDFWin context menu & startup registration..." -ForegroundColor Cyan
 
-# 1. Desregistrar extensión moderna de Windows 11
+# 1. Unregister Windows 11 modern package
 Get-AppxPackage -Name "*PDFWin*" | Remove-AppxPackage -ErrorAction SilentlyContinue
 
-# 2. Desregistrar asociaciones clásicas
+# 2. Unregister Startup entry
+try {
+    Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "PDFWin" -ErrorAction SilentlyContinue
+} catch { }
+
+# 3. Unregister classic associations
 $exePath = Join-Path $PSScriptRoot "PDFWin.exe"
 if (-not (Test-Path $exePath)) { $exePath = Join-Path $PSScriptRoot "PDFWin_App\PDFWin.exe" }
 if (-not (Test-Path $exePath)) { $exePath = Join-Path $PSScriptRoot "publish\PDFWin.exe" }
@@ -35,4 +40,4 @@ if (Test-Path $bgKey) {
     Remove-Item -Path $bgKey -Recurse -Force
 }
 
-Write-Host "[✓] Menú contextual de PDFWin desinstalado exitosamente." -ForegroundColor Green
+Write-Host "[✓] PDFWin context menu & startup uninstalled successfully." -ForegroundColor Green

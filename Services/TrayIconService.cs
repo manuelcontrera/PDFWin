@@ -141,10 +141,10 @@ public class TrayIconService : IDisposable
         IntPtr hMenu = CreatePopupMenu();
         if (hMenu == IntPtr.Zero) return;
 
-        AppendMenu(hMenu, MF_STRING, 1, "Abrir PDFWin");
-        AppendMenu(hMenu, MF_STRING, 2, "Activar menú contextual de Windows 11");
+        AppendMenu(hMenu, MF_STRING, 1, "Open PDFWin");
+        AppendMenu(hMenu, MF_STRING, 2, "Register Windows 11 Context Menu");
         AppendMenu(hMenu, MF_SEPARATOR, 0, string.Empty);
-        AppendMenu(hMenu, MF_STRING, 3, "Salir");
+        AppendMenu(hMenu, MF_STRING, 3, "Exit");
 
         GetCursorPos(out POINT pt);
         Win32Helper.SetForegroundWindow(_hwnd);
@@ -163,6 +163,7 @@ public class TrayIconService : IDisposable
             if (!string.IsNullOrEmpty(exePath))
             {
                 ContextMenuService.RegisterContextMenu(exePath);
+                StartupService.RegisterStartup(exePath);
             }
         }
         else if (cmd == 3)

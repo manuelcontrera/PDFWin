@@ -58,7 +58,7 @@ public static class PdfService
     {
         if (filePaths == null || filePaths.Count == 0)
         {
-            throw new ArgumentException("No hay archivos para convertir.", nameof(filePaths));
+            throw new ArgumentException("No files to convert.", nameof(filePaths));
         }
 
         // Determine destination folder with read-only fallback probe
@@ -95,7 +95,7 @@ public static class PdfService
         }
         else
         {
-            fileName = "Documento_Combinado.pdf";
+            fileName = "Combined_Document.pdf";
         }
 
         string outputPath = GetUniqueFilePath(targetDir, fileName);
@@ -140,7 +140,7 @@ public static class PdfService
 
         if (outputDoc.PageCount == 0)
         {
-            throw new InvalidOperationException("No se pudo agregar ninguna página al PDF.");
+            throw new InvalidOperationException("Could not add any pages to the PDF.");
         }
 
         outputDoc.Save(outputPath);
@@ -181,7 +181,7 @@ public static class PdfService
 
             if (xImage == null)
             {
-                throw new NotSupportedException($"No se pudo decodificar la imagen: {filePath}");
+                throw new NotSupportedException($"Could not decode image: {filePath}");
             }
 
             // Create page matching image aspect ratio and physical points
@@ -211,7 +211,7 @@ public static class PdfService
         var decoder = await BitmapDecoder.CreateAsync(stream);
         if (decoder.PixelWidth > 16384 || decoder.PixelHeight > 16384)
         {
-            throw new NotSupportedException($"La imagen supera las dimensiones máximas permitidas ({decoder.PixelWidth}x{decoder.PixelHeight}).");
+            throw new NotSupportedException($"Image exceeds maximum allowed dimensions ({decoder.PixelWidth}x{decoder.PixelHeight}).");
         }
         var softwareBitmap = await decoder.GetSoftwareBitmapAsync();
 

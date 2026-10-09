@@ -78,12 +78,12 @@ public static class ToastNotificationService
             Initialize();
 
             var notification = new AppNotificationBuilder()
-                .AddText("PDFWin - Documento generado")
+                .AddText("PDFWin - PDF Created")
                 .AddText(Path.GetFileName(pdfPath))
-                .AddButton(new AppNotificationButton("Abrir PDF")
+                .AddButton(new AppNotificationButton("Open PDF")
                     .AddArgument("action", "open")
                     .AddArgument("path", pdfPath))
-                .AddButton(new AppNotificationButton("Abrir Carpeta")
+                .AddButton(new AppNotificationButton("Open Folder")
                     .AddArgument("action", "folder")
                     .AddArgument("path", Path.GetDirectoryName(pdfPath) ?? ""))
                 .BuildNotification();

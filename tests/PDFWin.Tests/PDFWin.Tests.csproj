@@ -22,6 +22,7 @@
     <Compile Include="..\..\Native\*.cs" Link="Native\%(FileName)%(Extension)" />
     <Compile Include="..\..\Services\PdfService.cs" Link="Services\PdfService.cs" />
     <Compile Include="..\..\Services\SettingsService.cs" Link="Services\SettingsService.cs" />
+    <Compile Include="..\..\Services\StartupService.cs" Link="Services\StartupService.cs" />
   </ItemGroup>
 
   <ItemGroup>

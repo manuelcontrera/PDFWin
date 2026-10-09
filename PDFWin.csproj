@@ -19,7 +19,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <ProjectPriFileName>resources.pri</ProjectPriFileName>
-    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**;publish\**;PDFWin_App\**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**;publish\**;PDFWin_App\**;installer\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

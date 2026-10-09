@@ -42,13 +42,28 @@ public partial class App : Application
         };
     }
 
+    public static bool IsStartupLaunch { get; set; } = false;
+
     /// <summary>
     /// Invoked when the application is launched.
     /// </summary>
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
+        try
+        {
+            var appArgs = Microsoft.Windows.AppLifecycle.AppInstance.GetCurrent().GetActivatedEventArgs();
+            if (appArgs != null && appArgs.Kind == Microsoft.Windows.AppLifecycle.ExtendedActivationKind.StartupTask)
+            {
+                IsStartupLaunch = true;
+            }
+        }
+        catch { }
+
         _window = new MainWindow();
-        _window.Activate();
+        if (!IsStartupLaunch)
+        {
+            _window.Activate();
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace PDFWin.Services;
 public static class ContextMenuService
 {
     private const string MenuKeyName = "PDFWin.CreatePdf";
-    private const string MenuTitle = "Crear PDF con PDFWin";
+    private const string MenuTitle = "Create PDF";
 
     private static readonly string[] SupportedAssociations =
     {
@@ -68,17 +68,13 @@ public static class ContextMenuService
 
             foreach (var assoc in SupportedAssociations)
             {
-                string title = assoc.Equals(".pdf", StringComparison.OrdinalIgnoreCase)
-                    ? "Unir con PDFWin"
-                    : MenuTitle;
-
-                RegisterAssociation($@"Software\Classes\SystemFileAssociations\{assoc}\shell", MenuKeyName, title, command, exePath);
+                RegisterAssociation($@"Software\Classes\SystemFileAssociations\{assoc}\shell", MenuKeyName, MenuTitle, command, exePath);
             }
 
             // 3. For directories
             string dirCommand = $"\"{exePath}\" --folder \"%1\"";
             RegisterAssociation(@"Software\Classes\Directory\shell", MenuKeyName, MenuTitle, dirCommand, exePath);
-            RegisterAssociation(@"Software\Classes\Directory\Background\shell", MenuKeyName, "Crear PDF con imágenes de esta carpeta", $"\"{exePath}\" --folder \"%V\"", exePath);
+            RegisterAssociation(@"Software\Classes\Directory\Background\shell", MenuKeyName, MenuTitle, $"\"{exePath}\" --folder \"%V\"", exePath);
 
             return true;
         }

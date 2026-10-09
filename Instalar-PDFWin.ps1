@@ -1,35 +1,35 @@
-# Script Instalador / Configurador de PDFWin para Windows 11
-# Instala en %LOCALAPPDATA%\Programs\PDFWin, crea accesos directos, registra menú moderno de Windows 11 y lanza PDFWin.
-# No requiere permisos de Administrador.
+# PDFWin Installer / Setup Script for Windows 11
+# Installs to %LOCALAPPDATA%\Programs\PDFWin, creates shortcuts, registers Windows 11 context menu and startup app.
+# Does not require Administrator privileges.
 
 $ErrorActionPreference = "SilentlyContinue"
 
-$sourceExe = Join-Path $PSScriptRoot "PDFWin.exe"
-if (-not (Test-Path $sourceExe)) { $sourceExe = Join-Path $PSScriptRoot "PDFWin_App\PDFWin.exe" }
-if (-not (Test-Path $sourceExe)) { $sourceExe = Join-Path $PSScriptRoot "publish\PDFWin.exe" }
-if (-not (Test-Path $sourceExe)) { $sourceExe = Join-Path "$HOME\AppData\Local\Programs\PDFWin" "PDFWin.exe" }
+$sourceDir = Join-Path $PSScriptRoot "publish"
+if (-not (Test-Path (Join-Path $sourceDir "PDFWin.dll"))) { $sourceDir = Join-Path $PSScriptRoot "PDFWin_App" }
+if (-not (Test-Path (Join-Path $sourceDir "PDFWin.dll"))) { $sourceDir = $PSScriptRoot }
 
-$sourceDir = [System.IO.Path]::GetDirectoryName($sourceExe)
+$sourceExe = Join-Path $sourceDir "PDFWin.exe"
+if (-not (Test-Path $sourceExe)) { $sourceExe = Join-Path $PSScriptRoot "PDFWin.exe" }
 
-# Destino estándar de aplicaciones de usuario en Windows 11
+# Standard user application directory on Windows 11
 $targetDir = "$HOME\AppData\Local\Programs\PDFWin"
 $targetExe = Join-Path $targetDir "PDFWin.exe"
 
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "           Instalador / Activador de PDFWin                 " -ForegroundColor Cyan
-Write-Host "              Nativo para Windows 11                        " -ForegroundColor Cyan
+Write-Host "             PDFWin Installer / Activator                   " -ForegroundColor Cyan
+Write-Host "                 Native for Windows 11                      " -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "Directorio de destino: $targetDir`n" -ForegroundColor Gray
+Write-Host "Destination directory: $targetDir`n" -ForegroundColor Gray
 
-# 1. Copiar archivos si la fuente no es ya el destino
+# 1. Copy files if source is not already target
 if ($sourceDir -ne $targetDir) {
-    Write-Host "[1/4] Copiando archivos de la aplicacion..." -ForegroundColor Yellow
+    Write-Host "[1/4] Copying application files..." -ForegroundColor Yellow
     Stop-Process -Name PDFWin -Force -ErrorAction SilentlyContinue
     Start-Sleep -Milliseconds 300
     New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
     Copy-Item "$sourceDir\*" $targetDir -Recurse -Force | Out-Null
     
-    # Asegurar que los componentes de extensión de shell y manifiesto estén en el destino
+    # Ensure shell extension and manifest are copied to target
     $shellExt = Join-Path $PSScriptRoot "Native\ShellExtension\PDFWinShellExt.dll"
     if (Test-Path $shellExt) { Copy-Item $shellExt $targetDir -Force | Out-Null }
     
@@ -40,57 +40,66 @@ if ($sourceDir -ne $targetDir) {
     if (Test-Path $sparseAssets) { Copy-Item $sparseAssets $targetDir -Recurse -Force | Out-Null }
 }
 
-# 2. Crear accesos directos
-Write-Host "[2/4] Creando accesos directos..." -ForegroundColor Yellow
+# 2. Create shortcuts
+Write-Host "[2/4] Creating shortcuts..." -ForegroundColor Yellow
 try {
     $wshShell = New-Object -ComObject WScript.Shell
     $desktopPath = [System.Environment]::GetFolderPath('Desktop')
     $programsPath = [System.Environment]::GetFolderPath('Programs')
 
-    # Acceso en el Escritorio
+    # Desktop shortcut
     $desktopShortcut = $wshShell.CreateShortcut((Join-Path $desktopPath "PDFWin.lnk"))
     $desktopShortcut.TargetPath = $targetExe
     $desktopShortcut.WorkingDirectory = $targetDir
     $desktopShortcut.IconLocation = "$targetExe,0"
-    $desktopShortcut.Description = "PDFWin - Creacion y union de PDFs para Windows 11"
+    $desktopShortcut.Description = "PDFWin - Windows 11 PDF Creation and Merge Utility"
     $desktopShortcut.Save()
 
-    # Acceso en el Menú Inicio
+    # Start Menu shortcut
     $startShortcut = $wshShell.CreateShortcut((Join-Path $programsPath "PDFWin.lnk"))
     $startShortcut.TargetPath = $targetExe
     $startShortcut.WorkingDirectory = $targetDir
     $startShortcut.IconLocation = "$targetExe,0"
-    $startShortcut.Description = "PDFWin - Creacion y union de PDFs para Windows 11"
+    $startShortcut.Description = "PDFWin - Windows 11 PDF Creation and Merge Utility"
     $startShortcut.Save()
-    Write-Host "  [✓] Accesos directos creados en Escritorio y Menu Inicio." -ForegroundColor Green
+    Write-Host "  [✓] Shortcuts created on Desktop and Start Menu." -ForegroundColor Green
 } catch {
-    Write-Warning "No se pudieron crear accesos directos: $($_.Exception.Message)"
+    Write-Warning "Could not create shortcuts: $($_.Exception.Message)"
 }
 
-# 3. Registrar menú contextual (Moderno de Windows 11 + Clásico)
-Write-Host "[3/4] Registrando en el Menu Contextual de Windows 11..." -ForegroundColor Yellow
+# 3. Register Context Menu (Windows 11 Modern + Fallback) and Startup App
+Write-Host "[3/4] Registering Windows 11 Context Menu & Startup App..." -ForegroundColor Yellow
 $manifestPath = Join-Path $targetDir "AppxManifest.xml"
 if (Test-Path $manifestPath) {
     try {
         Add-AppxPackage -Register $manifestPath -ExternalLocation $targetDir -ForceApplicationShutdown
-        Write-Host "  [✓] Menu contextual nativo de Windows 11 registrado correctamente!" -ForegroundColor Green
+        Write-Host "  [✓] Native Windows 11 context menu & package registered!" -ForegroundColor Green
     } catch {
-        Write-Warning "Aviso al registrar paquete moderno: $($_.Exception.Message)"
+        Write-Warning "Notice when registering modern package: $($_.Exception.Message)"
     }
 }
 
-# Ejecutar el registro de asociaciones clásicas
+# Register Startup entry in HKCU Run (Settings > Apps > Startup)
+try {
+    Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "PDFWin" -Value "`"$targetExe`" --startup"
+    Write-Host "  [✓] Registered in Windows 11 Settings > Apps > Startup!" -ForegroundColor Green
+} catch {
+    Write-Warning "Could not register startup key: $($_.Exception.Message)"
+}
+
+# Execute classic menu associations registration
 Start-Process -FilePath $targetExe -ArgumentList "--register-menu" -Wait -ErrorAction SilentlyContinue
 
-# 4. Lanzar la aplicación
-Write-Host "[4/4] Iniciando PDFWin..." -ForegroundColor Yellow
+# 4. Launch PDFWin
+Write-Host "[4/4] Starting PDFWin..." -ForegroundColor Yellow
 Start-Process -FilePath $targetExe
 
 Write-Host "`n============================================================" -ForegroundColor Cyan
-Write-Host "  ¡PDFWin quedo 100% instalado y listo para usar!           " -ForegroundColor Green
+Write-Host "  PDFWin is 100% installed and ready to use!                " -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  • Atajo global: Presiona [Win + Alt + P] para abrir/ocultar." -ForegroundColor Yellow
-Write-Host "  • Bandeja del sistema: Busca el icono de PDFWin junto al reloj." -ForegroundColor Yellow
-Write-Host "  • Clic derecho en imagenes o carpetas: 'Crear PDF con PDFWin' aparece" -ForegroundColor Yellow
-Write-Host "    DIRECTAMENTE en el menú principal de Windows 11." -ForegroundColor Yellow
+Write-Host "  • Global shortcut: Press [Win + Alt + P] to show/hide." -ForegroundColor Yellow
+Write-Host "  • System tray: Look for the PDFWin icon next to the clock." -ForegroundColor Yellow
+Write-Host "  • Context menu: Right-click images, PDFs or folders - 'Create PDF' appears" -ForegroundColor Yellow
+Write-Host "    DIRECTLY in the Windows 11 main menu." -ForegroundColor Yellow
+Write-Host "  • Startup: Enabled and visible in Windows 11 Settings > Apps > Startup." -ForegroundColor Yellow
 Write-Host "============================================================`n" -ForegroundColor Cyan

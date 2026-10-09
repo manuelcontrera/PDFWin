@@ -101,7 +101,7 @@ public:
             }
         }
 
-        const WCHAR* title = onlyPdfs ? L"Unir con PDFWin" : L"Crear PDF con PDFWin";
+        const WCHAR* title = L"Create PDF";
         return SHStrDupW(title, ppszName);
     }
 
@@ -126,7 +126,7 @@ public:
     IFACEMETHODIMP GetToolTip(IShellItemArray* psiItemArray, LPWSTR* ppszInfotip) override
     {
         *ppszInfotip = nullptr;
-        return SHStrDupW(L"Crear o unir en un solo PDF con PDFWin", ppszInfotip);
+        return SHStrDupW(L"Create PDF", ppszInfotip);
     }
 
     IFACEMETHODIMP GetCanonicalName(GUID* pguidCommandName) override

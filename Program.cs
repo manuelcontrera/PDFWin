@@ -37,20 +37,32 @@ public static class Program
             }
         }
 
+        bool isStartup = args.Any(a =>
+            a.Equals("--startup", StringComparison.OrdinalIgnoreCase) ||
+            a.Equals("/startup", StringComparison.OrdinalIgnoreCase) ||
+            a.Equals("-startup", StringComparison.OrdinalIgnoreCase) ||
+            a.Equals("--minimized", StringComparison.OrdinalIgnoreCase) ||
+            a.Equals("--tray", StringComparison.OrdinalIgnoreCase));
+
         // 2. Single-instance check for GUI mode
         using var mutex = new System.Threading.Mutex(true, AppMutexName, out bool isNewInstance);
         if (!isNewInstance)
         {
-            // Another instance is already running; signal it to show and focus
-            IntPtr hwnd = Native.Win32Helper.FindWindow(null, "PDFWin");
-            if (hwnd != IntPtr.Zero)
+            if (!isStartup)
             {
-                uint msg = Native.Win32Helper.RegisterWindowMessage("PDFWin_Show_Command");
-                Native.Win32Helper.PostMessage(hwnd, msg, IntPtr.Zero, IntPtr.Zero);
-                Native.Win32Helper.SetForegroundWindow(hwnd);
+                // Another instance is already running; signal it to show and focus
+                IntPtr hwnd = Native.Win32Helper.FindWindow(null, "PDFWin");
+                if (hwnd != IntPtr.Zero)
+                {
+                    uint msg = Native.Win32Helper.RegisterWindowMessage("PDFWin_Show_Command");
+                    Native.Win32Helper.PostMessage(hwnd, msg, IntPtr.Zero, IntPtr.Zero);
+                    Native.Win32Helper.SetForegroundWindow(hwnd);
+                }
             }
             return;
         }
+
+        App.IsStartupLaunch = isStartup;
 
         // 3. Launch normal WinUI 3 Application
         WinRT.ComWrappersSupport.InitializeComWrappers();
@@ -71,12 +83,27 @@ public static class Program
         {
             string exePath = Environment.ProcessPath ?? "";
             ContextMenuService.RegisterContextMenu(exePath);
+            StartupService.RegisterStartup(exePath);
             return true;
         }
 
         if (firstArg == "--unregister-menu")
         {
             ContextMenuService.UnregisterContextMenu();
+            StartupService.UnregisterStartup();
+            return true;
+        }
+
+        if (firstArg == "--register-startup")
+        {
+            string exePath = Environment.ProcessPath ?? "";
+            StartupService.RegisterStartup(exePath);
+            return true;
+        }
+
+        if (firstArg == "--unregister-startup")
+        {
+            StartupService.UnregisterStartup();
             return true;
         }
 
@@ -122,10 +149,10 @@ public static class Program
     {
         try
         {
-            Console.WriteLine($"Procesando {files.Count} archivo(s)...");
+            Console.WriteLine($"Processing {files.Count} file(s)...");
             var sorted = PdfService.SortNaturally(files);
             string outputPath = PdfService.CreatePdfAsync(sorted).GetAwaiter().GetResult();
-            Console.WriteLine($"PDF creado exitosamente: {outputPath}");
+            Console.WriteLine($"PDF successfully created: {outputPath}");
             ToastNotificationService.ShowPdfCreated(outputPath);
         }
         catch (Exception ex)

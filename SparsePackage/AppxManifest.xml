@@ -2,12 +2,13 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
   xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
   xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
   xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap uap10 desktop4 desktop5 com rescap">
+  IgnorableNamespaces="uap uap5 uap10 desktop4 desktop5 com rescap">
 
   <Identity
     Name="PDFWin.App"
@@ -28,16 +29,15 @@
   </Dependencies>
 
   <Resources>
-    <Resource Language="es-419"/>
-    <Resource Language="es"/>
     <Resource Language="en-US"/>
+    <Resource Language="es"/>
   </Resources>
 
   <Applications>
     <Application Id="App" Executable="PDFWin.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="PDFWin"
-        Description="PDFWin - Creacion y union de PDFs para Windows 11"
+        Description="PDFWin - Windows 11 PDF Creation and Merge Utility"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
@@ -69,6 +69,14 @@
             </desktop5:ItemType>
           </desktop4:FileExplorerContextMenus>
         </desktop4:Extension>
+
+        <!-- Windows 11 Startup App (Settings > Apps > Startup) -->
+        <uap5:Extension Category="windows.startupTask">
+          <uap5:StartupTask
+            TaskId="PDFWinStartupTask"
+            Enabled="true"
+            DisplayName="PDFWin" />
+        </uap5:Extension>
       </Extensions>
     </Application>
   </Applications>
