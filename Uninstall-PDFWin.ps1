@@ -12,10 +12,9 @@ try {
 } catch { }
 
 # 3. Unregister classic associations
-$exePath = Join-Path $PSScriptRoot "PDFWin.exe"
-if (-not (Test-Path $exePath)) { $exePath = Join-Path $PSScriptRoot "PDFWin_App\PDFWin.exe" }
+$targetDir = "$HOME\AppData\Local\Programs\PDFWin"
+$exePath = Join-Path $targetDir "PDFWin.exe"
 if (-not (Test-Path $exePath)) { $exePath = Join-Path $PSScriptRoot "publish\PDFWin.exe" }
-if (-not (Test-Path $exePath)) { $exePath = Join-Path "$HOME\AppData\Local\Programs\PDFWin" "PDFWin.exe" }
 
 if (Test-Path $exePath) {
     Start-Process -FilePath $exePath -ArgumentList "--unregister-menu" -Wait -ErrorAction SilentlyContinue

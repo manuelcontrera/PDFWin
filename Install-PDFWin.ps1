@@ -5,11 +5,7 @@
 $ErrorActionPreference = "SilentlyContinue"
 
 $sourceDir = Join-Path $PSScriptRoot "publish"
-if (-not (Test-Path (Join-Path $sourceDir "PDFWin.dll"))) { $sourceDir = Join-Path $PSScriptRoot "PDFWin_App" }
-if (-not (Test-Path (Join-Path $sourceDir "PDFWin.dll"))) { $sourceDir = $PSScriptRoot }
-
 $sourceExe = Join-Path $sourceDir "PDFWin.exe"
-if (-not (Test-Path $sourceExe)) { $sourceExe = Join-Path $PSScriptRoot "PDFWin.exe" }
 
 # Standard user application directory on Windows 11
 $targetDir = "$HOME\AppData\Local\Programs\PDFWin"

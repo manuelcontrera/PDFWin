@@ -4,10 +4,9 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:systemai="http://schemas.microsoft.com/appx/manifest/systemai/windows10"
-  IgnorableNamespaces="uap uap5 rescap systemai">
+  IgnorableNamespaces="uap rescap systemai">
 
   <Identity
     Name="4EB0F831-8D6C-4625-B86C-52DED2BA8B81"
@@ -44,14 +43,6 @@
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
-      <Extensions>
-        <uap5:Extension Category="windows.startupTask">
-          <uap5:StartupTask
-            TaskId="PDFWinStartupTask"
-            Enabled="true"
-            DisplayName="PDFWin" />
-        </uap5:Extension>
-      </Extensions>
     </Application>
   </Applications>
 
