@@ -25,7 +25,11 @@
                 Margin="0"
                 CornerRadius="0"
                 BorderThickness="0"
+                RenderTransformOrigin="0.5,0.5"
                 Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <Border.RenderTransform>
+                <CompositeTransform x:Name="CardTransform" ScaleX="1" ScaleY="1" />
+            </Border.RenderTransform>
 
             <Grid>
                 <Grid.RowDefinitions>
@@ -96,10 +100,14 @@
                                 HorizontalAlignment="Center"
                                 Spacing="8"
                                 Background="Transparent"
+                                RenderTransformOrigin="0.5,0.5"
                                 PointerPressed="DragArea_PointerPressed"
                                 PointerMoved="DragArea_PointerMoved"
                                 PointerReleased="DragArea_PointerReleased"
                                 PointerCaptureLost="DragArea_PointerCaptureLost">
+                        <StackPanel.RenderTransform>
+                            <TranslateTransform x:Name="EmptyStateTranslate" Y="0" />
+                        </StackPanel.RenderTransform>
                         <TextBlock Text="Drop items here"
                                    FontSize="17"
                                    FontWeight="SemiBold"
@@ -108,7 +116,12 @@
                     </StackPanel>
 
                     <!-- Populated State: Reorderable List of items -->
-                    <Grid x:Name="PopulatedStatePanel" Visibility="Collapsed">
+                    <Grid x:Name="PopulatedStatePanel"
+                          Visibility="Collapsed"
+                          RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <TranslateTransform x:Name="PopulatedStateTranslate" Y="0" />
+                        </Grid.RenderTransform>
                         <ListView x:Name="ItemsListView"
                                   ItemsSource="{x:Bind DroppedItems}"
                                   CanReorderItems="True"
@@ -116,6 +129,12 @@
                                   AllowDrop="True"
                                   SelectionMode="None"
                                   Padding="0,4,0,4">
+                            <ListView.ItemContainerTransitions>
+                                <TransitionCollection>
+                                    <AddDeleteThemeTransition />
+                                    <ReorderThemeTransition />
+                                </TransitionCollection>
+                            </ListView.ItemContainerTransitions>
                             <ListView.ItemContainerStyle>
                                 <Style TargetType="ListViewItem">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />

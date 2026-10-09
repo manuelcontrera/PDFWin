@@ -19,6 +19,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <ProjectPriFileName>resources.pri</ProjectPriFileName>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
     <DefaultItemExcludes>$(DefaultItemExcludes);tests\**;publish\**;PDFWin_App\**;installer\**</DefaultItemExcludes>
   </PropertyGroup>
 

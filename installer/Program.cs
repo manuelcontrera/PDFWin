@@ -280,13 +280,12 @@ internal static class Program
             desktopShortcut.Description = "PDFWin - Windows 11 PDF Creation and Merge Utility";
             desktopShortcut.Save();
 
-            // Start Menu shortcut
-            dynamic startShortcut = shell.CreateShortcut(Path.Combine(startMenuPath, "PDFWin.lnk"));
-            startShortcut.TargetPath = targetExe;
-            startShortcut.WorkingDirectory = targetDir;
-            startShortcut.IconLocation = $"{targetExe},0";
-            startShortcut.Description = "PDFWin - Windows 11 PDF Creation and Merge Utility";
-            startShortcut.Save();
+            // Clean up any redundant Start Menu shortcut so only the Sparse Package app shows up in Search
+            string startLnk = Path.Combine(startMenuPath, "PDFWin.lnk");
+            if (File.Exists(startLnk))
+            {
+                try { File.Delete(startLnk); } catch { }
+            }
         }
         catch { }
     }
@@ -299,7 +298,7 @@ internal static class Program
             if (key == null) return;
 
             key.SetValue("DisplayName", "PDFWin");
-            key.SetValue("DisplayVersion", "1.0.0");
+            key.SetValue("DisplayVersion", "1.1.0");
             key.SetValue("Publisher", "Manuel Contrera");
             key.SetValue("DisplayIcon", $"{targetExe},0");
             key.SetValue("InstallLocation", targetDir);

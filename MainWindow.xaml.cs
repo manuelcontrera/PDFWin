@@ -13,6 +13,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using PDFWin.Models;
 using PDFWin.Native;
 using PDFWin.Services;
@@ -64,6 +65,13 @@ public sealed partial class MainWindow : Window
         if (Content is FrameworkElement root)
         {
             root.ActualThemeChanged += (s, e) => ApplyWindowBorderColor();
+            root.Loaded += (s, e) =>
+            {
+                if (_appWindow.IsVisible)
+                {
+                    _ = AnimateCardScaleOpacityAsync(0.85, 1.0, 0.0, 1.0, 220, easeOut: true);
+                }
+            };
         }
     }
 
@@ -160,9 +168,7 @@ public sealed partial class MainWindow : Window
     {
         if (msg == WM_SHOW_PDFWIN)
         {
-            _appWindow.Show();
-            Win32Helper.SetForegroundWindow(_hwnd);
-            Activate();
+            ShowAnimated();
             return IntPtr.Zero;
         }
         else if (msg == Win32Helper.WM_HOTKEY)
@@ -271,25 +277,167 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    public void ToggleVisibility()
+    private bool _isAnimatingVisibility = false;
+
+    public async void ShowAnimated()
     {
-        if (_appWindow.IsVisible)
+        if (_isAnimatingVisibility) return;
+        _isAnimatingVisibility = true;
+
+        try
         {
-            SettingsService.Save();
-            _appWindow.Hide();
-        }
-        else
-        {
+            CardTransform.ScaleX = 0.85;
+            CardTransform.ScaleY = 0.85;
+            CardBorder.Opacity = 0.0;
+
             _appWindow.Show();
             Win32Helper.SetForegroundWindow(_hwnd);
             Activate();
+
+            await AnimateCardScaleOpacityAsync(0.85, 1.0, 0.0, 1.0, 220, easeOut: true);
+        }
+        finally
+        {
+            _isAnimatingVisibility = false;
         }
     }
 
-    private void BtnClose_Click(object sender, RoutedEventArgs e)
+    public async Task HideAnimatedAsync()
     {
-        SettingsService.Save();
-        _appWindow.Hide();
+        if (!_appWindow.IsVisible || _isAnimatingVisibility) return;
+        _isAnimatingVisibility = true;
+
+        try
+        {
+            SettingsService.Save();
+            await AnimateCardScaleOpacityAsync(1.0, 0.85, 1.0, 0.0, 180, easeOut: false);
+            _appWindow.Hide();
+            CardTransform.ScaleX = 1.0;
+            CardTransform.ScaleY = 1.0;
+            CardBorder.Opacity = 1.0;
+        }
+        finally
+        {
+            _isAnimatingVisibility = false;
+        }
+    }
+
+    public async void ToggleVisibility()
+    {
+        if (_appWindow.IsVisible)
+        {
+            await HideAnimatedAsync();
+        }
+        else
+        {
+            ShowAnimated();
+        }
+    }
+
+    private async void BtnClose_Click(object sender, RoutedEventArgs e)
+    {
+        await HideAnimatedAsync();
+    }
+
+    private async Task AnimateCardScaleOpacityAsync(double startScale, double targetScale,
+                                                    double startOpacity, double targetOpacity,
+                                                    int durationMs, bool easeOut = true)
+    {
+        CardTransform.ScaleX = startScale;
+        CardTransform.ScaleY = startScale;
+        CardBorder.Opacity = startOpacity;
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < durationMs)
+        {
+            double t = Math.Clamp((double)sw.ElapsedMilliseconds / durationMs, 0.0, 1.0);
+            double ease = easeOut
+                ? 1.0 - Math.Pow(1.0 - t, 3)
+                : Math.Pow(t, 3);
+
+            CardTransform.ScaleX = startScale + (targetScale - startScale) * ease;
+            CardTransform.ScaleY = startScale + (targetScale - startScale) * ease;
+            CardBorder.Opacity = startOpacity + (targetOpacity - startOpacity) * ease;
+
+            await Task.Delay(12);
+        }
+
+        CardTransform.ScaleX = targetScale;
+        CardTransform.ScaleY = targetScale;
+        CardBorder.Opacity = targetOpacity;
+    }
+
+    private async Task AnimateWindowResizeAsync(int targetDipWidth, int targetDipHeight, int durationMs = 240)
+    {
+        float scale = GetDpiScale();
+        int targetPhysicalWidth = (int)Math.Round(targetDipWidth * scale);
+        int targetPhysicalHeight = (int)Math.Round(targetDipHeight * scale);
+
+        var currentSize = _appWindow.Size;
+        var currentPos = _appWindow.Position;
+
+        int startW = currentSize.Width;
+        int startH = currentSize.Height;
+        int startX = currentPos.X;
+        int startY = currentPos.Y;
+
+        int deltaW = targetPhysicalWidth - startW;
+        int targetX = startX - (deltaW / 2);
+        int targetY = startY;
+
+        var displayArea = DisplayArea.GetFromWindowId(_appWindow.Id, DisplayAreaFallback.Nearest);
+        if (displayArea != null)
+        {
+            var workArea = displayArea.WorkArea;
+            if (targetX < workArea.X) targetX = workArea.X;
+            if (targetX + targetPhysicalWidth > workArea.X + workArea.Width)
+                targetX = workArea.X + workArea.Width - targetPhysicalWidth;
+            if (targetY + targetPhysicalHeight > workArea.Y + workArea.Height)
+                targetY = workArea.Y + workArea.Height - targetPhysicalHeight;
+        }
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < durationMs)
+        {
+            double t = Math.Clamp((double)sw.ElapsedMilliseconds / durationMs, 0.0, 1.0);
+            double ease = 1.0 - Math.Pow(1.0 - t, 3);
+
+            int curW = (int)Math.Round(startW + (targetPhysicalWidth - startW) * ease);
+            int curH = (int)Math.Round(startH + (targetPhysicalHeight - startH) * ease);
+            int curX = (int)Math.Round(startX + (targetX - startX) * ease);
+            int curY = (int)Math.Round(startY + (targetY - startY) * ease);
+
+            _appWindow.MoveAndResize(new RectInt32(curX, curY, curW, curH));
+            await Task.Delay(12);
+        }
+
+        _appWindow.MoveAndResize(new RectInt32(targetX, targetY, targetPhysicalWidth, targetPhysicalHeight));
+    }
+
+    private async Task AnimatePanelTransitionAsync(UIElement element, TranslateTransform translate,
+                                                   double startOpacity, double targetOpacity,
+                                                   double startY, double targetY,
+                                                   int durationMs, bool easeOut = true)
+    {
+        element.Opacity = startOpacity;
+        translate.Y = startY;
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < durationMs)
+        {
+            double t = Math.Clamp((double)sw.ElapsedMilliseconds / durationMs, 0.0, 1.0);
+            double ease = easeOut
+                ? 1.0 - Math.Pow(1.0 - t, 3)
+                : Math.Pow(t, 3);
+
+            element.Opacity = startOpacity + (targetOpacity - startOpacity) * ease;
+            translate.Y = startY + (targetY - startY) * ease;
+
+            await Task.Delay(12);
+        }
+
+        element.Opacity = targetOpacity;
+        translate.Y = targetY;
     }
 
     public void ExitApp()
@@ -357,7 +505,9 @@ public sealed partial class MainWindow : Window
 
     #endregion
 
-    private void UpdateUiState()
+    private bool _isExpandingOrCollapsing = false;
+
+    private async void UpdateUiState()
     {
         for (int i = 0; i < DroppedItems.Count; i++)
         {
@@ -370,16 +520,64 @@ public sealed partial class MainWindow : Window
         if (count > 0 && !_isExpanded)
         {
             _isExpanded = true;
-            EmptyStatePanel.Visibility = Visibility.Collapsed;
-            PopulatedStatePanel.Visibility = Visibility.Visible;
-            ResizeWindowToDip(ExpandedWidth, ExpandedHeight);
+            await TransitionToExpandedStateAsync();
         }
         else if (count == 0 && _isExpanded)
         {
             _isExpanded = false;
+            await TransitionToCompactStateAsync();
+        }
+    }
+
+    private async Task TransitionToExpandedStateAsync()
+    {
+        if (_isExpandingOrCollapsing) return;
+        _isExpandingOrCollapsing = true;
+
+        try
+        {
+            PopulatedStatePanel.Opacity = 0.0;
+            PopulatedStateTranslate.Y = 16.0;
+            PopulatedStatePanel.Visibility = Visibility.Visible;
+
+            var fadeOutEmpty = AnimatePanelTransitionAsync(EmptyStatePanel, EmptyStateTranslate, 1.0, 0.0, 0, -10, 110, easeOut: false);
+            var resizeTask = AnimateWindowResizeAsync(ExpandedWidth, ExpandedHeight, 240);
+
+            await fadeOutEmpty;
+            EmptyStatePanel.Visibility = Visibility.Collapsed;
+
+            var fadeInPopulated = AnimatePanelTransitionAsync(PopulatedStatePanel, PopulatedStateTranslate, 0.0, 1.0, 16, 0, 180, easeOut: true);
+            await Task.WhenAll(resizeTask, fadeInPopulated);
+        }
+        finally
+        {
+            _isExpandingOrCollapsing = false;
+        }
+    }
+
+    private async Task TransitionToCompactStateAsync()
+    {
+        if (_isExpandingOrCollapsing) return;
+        _isExpandingOrCollapsing = true;
+
+        try
+        {
+            EmptyStatePanel.Opacity = 0.0;
+            EmptyStateTranslate.Y = -10.0;
             EmptyStatePanel.Visibility = Visibility.Visible;
+
+            var fadeOutPopulated = AnimatePanelTransitionAsync(PopulatedStatePanel, PopulatedStateTranslate, 1.0, 0.0, 0, 16, 110, easeOut: false);
+            var resizeTask = AnimateWindowResizeAsync(CompactWidth, CompactHeight, 220);
+
+            await fadeOutPopulated;
             PopulatedStatePanel.Visibility = Visibility.Collapsed;
-            ResizeWindowToDip(CompactWidth, CompactHeight);
+
+            var fadeInEmpty = AnimatePanelTransitionAsync(EmptyStatePanel, EmptyStateTranslate, 0.0, 1.0, -10, 0, 180, easeOut: true);
+            await Task.WhenAll(resizeTask, fadeInEmpty);
+        }
+        finally
+        {
+            _isExpandingOrCollapsing = false;
         }
     }
 

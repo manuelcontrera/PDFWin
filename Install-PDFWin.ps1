@@ -51,16 +51,12 @@ try {
     $desktopShortcut.Description = "PDFWin - Windows 11 PDF Creation and Merge Utility"
     $desktopShortcut.Save()
 
-    # Start Menu shortcut
-    $startShortcut = $wshShell.CreateShortcut((Join-Path $programsPath "PDFWin.lnk"))
-    $startShortcut.TargetPath = $targetExe
-    $startShortcut.WorkingDirectory = $targetDir
-    $startShortcut.IconLocation = "$targetExe,0"
-    $startShortcut.Description = "PDFWin - Windows 11 PDF Creation and Merge Utility"
-    $startShortcut.Save()
-    Write-Host "  [✓] Shortcuts created on Desktop and Start Menu." -ForegroundColor Green
+    # Clean up redundant Start Menu .lnk to avoid duplicates with the Sparse Package
+    $startShortcutPath = Join-Path $programsPath "PDFWin.lnk"
+    if (Test-Path $startShortcutPath) { Remove-Item $startShortcutPath -Force }
+    Write-Host "  [✓] Desktop shortcut created and Start Menu entry synced." -ForegroundColor Green
 } catch {
-    Write-Warning "Could not create shortcuts: $($_.Exception.Message)"
+    Write-Warning "Could not create shortcut: $($_.Exception.Message)"
 }
 
 # 3. Register Context Menu (Windows 11 Modern + Fallback) and Startup App
