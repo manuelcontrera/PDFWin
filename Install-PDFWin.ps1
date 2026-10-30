@@ -4,6 +4,13 @@
 
 $ErrorActionPreference = "SilentlyContinue"
 
+$setupExe = Join-Path $PSScriptRoot "release\PDFWin-Setup.exe"
+if (Test-Path $setupExe) {
+    Write-Host "Launching native PDFWin-Setup.exe..." -ForegroundColor Cyan
+    Start-Process -FilePath $setupExe -Wait
+    exit 0
+}
+
 $sourceDir = Join-Path $PSScriptRoot "publish"
 $sourceExe = Join-Path $sourceDir "PDFWin.exe"
 

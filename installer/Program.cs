@@ -12,8 +12,8 @@ using Microsoft.Win32;
 [assembly: AssemblyDescription("PDFWin - Native Windows 11 PDF Utility Installer")]
 [assembly: AssemblyCompany("Manuel Contrera")]
 [assembly: AssemblyProduct("PDFWin")]
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.5.0.0")]
+[assembly: AssemblyFileVersion("1.5.0.0")]
 
 namespace PDFWin.Installer
 {
@@ -508,7 +508,7 @@ namespace PDFWin.Installer
                     if (key == null) return;
 
                     key.SetValue("DisplayName", "PDFWin");
-                    key.SetValue("DisplayVersion", "1.1.0");
+                    key.SetValue("DisplayVersion", "1.5.0");
                     key.SetValue("Publisher", "Manuel Contrera");
                     key.SetValue("DisplayIcon", string.Format("{0},0", targetExe));
                     key.SetValue("InstallLocation", targetDir);
