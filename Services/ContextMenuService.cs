@@ -40,10 +40,30 @@ public static class ContextMenuService
             if (string.IsNullOrEmpty(exePath)) return false;
 
             string appDir = Path.GetDirectoryName(exePath) ?? "";
+            string msixPath = Path.Combine(appDir, "PDFWinSparse.msix");
             string manifestPath = Path.Combine(appDir, "AppxManifest.xml");
 
-            // 1. If AppxManifest exists, register Modern Windows 11 Package
-            if (File.Exists(manifestPath))
+            // 1. If PDFWinSparse.msix or AppxManifest exists, register Modern Windows 11 Package
+            if (File.Exists(msixPath))
+            {
+                try
+                {
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "powershell.exe",
+                        Arguments = $"-NoProfile -WindowStyle Hidden -Command \"Add-AppxPackage -Path '{msixPath}' -ExternalLocation '{appDir}' -ForceApplicationShutdown\"",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    using var p = Process.Start(psi);
+                    p?.WaitForExit(6000);
+                }
+                catch (Exception pEx)
+                {
+                    Debug.WriteLine($"Error registering modern msix package: {pEx.Message}");
+                }
+            }
+            else if (File.Exists(manifestPath))
             {
                 try
                 {

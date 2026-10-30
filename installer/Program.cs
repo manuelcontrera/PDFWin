@@ -5,15 +5,16 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("PDFWin Setup")]
-[assembly: AssemblyDescription("PDFWin - Native Windows 11 PDF Utility Installer")]
+[assembly: AssemblyTitle("PDFWin")]
+[assembly: AssemblyDescription("PDFWin - Native Windows 11 PDF Utility")]
 [assembly: AssemblyCompany("Manuel Contrera")]
 [assembly: AssemblyProduct("PDFWin")]
-[assembly: AssemblyVersion("1.5.0.0")]
-[assembly: AssemblyFileVersion("1.5.0.0")]
+[assembly: AssemblyVersion("1.5.1.0")]
+[assembly: AssemblyFileVersion("1.5.1.0")]
 
 namespace PDFWin.Installer
 {
@@ -32,6 +33,15 @@ namespace PDFWin.Installer
         [STAThread]
         public static void Main(string[] args)
         {
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i].Equals("--install-cert", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+                {
+                    InstallCertificateAndEnableSideloading(args[i + 1]);
+                    return;
+                }
+            }
+
             bool silent = args.Any(a =>
                 a.Equals("--silent", StringComparison.OrdinalIgnoreCase) ||
                 a.Equals("-s", StringComparison.OrdinalIgnoreCase) ||
@@ -133,26 +143,9 @@ namespace PDFWin.Installer
                 // 5. Create Desktop & Start Menu Shortcuts via WScript.Shell
                 CreateShortcuts(targetExe, targetDir);
 
-                // 6. Register Modern Windows 11 Context Menu (Sparse Package)
-                string manifestPath = Path.Combine(targetDir, "AppxManifest.xml");
-                if (File.Exists(manifestPath))
-                {
-                    try
-                    {
-                        var psi = new ProcessStartInfo
-                        {
-                            FileName = "powershell.exe",
-                            Arguments = string.Format("-NoProfile -WindowStyle Hidden -Command \"Add-AppxPackage -Register '{0}' -ExternalLocation '{1}' -ForceApplicationShutdown\"", manifestPath, targetDir),
-                            CreateNoWindow = true,
-                            UseShellExecute = false
-                        };
-                        using (var p = Process.Start(psi))
-                        {
-                            if (p != null) p.WaitForExit(6000);
-                        }
-                    }
-                    catch { }
-                }
+                // 6. Ensure Certificate & Register Modern Windows 11 Context Menu (Sparse Package)
+                EnsureCertificateTrusted(targetDir);
+                RegisterModernSparsePackage(targetDir);
 
                 // 7. Register Classic Context Menu Fallback
                 if (File.Exists(targetExe))
@@ -190,7 +183,7 @@ namespace PDFWin.Installer
                 // 9. Register in Windows Add/Remove Programs (Installed Apps)
                 RegisterInControlPanel(targetDir, targetExe);
 
-                // 10. Launch PDFWin
+                // 10. Launch PDFWin directly without any confirmation popup
                 if (!noLaunch && File.Exists(targetExe))
                 {
                     Process.Start(new ProcessStartInfo
@@ -200,15 +193,6 @@ namespace PDFWin.Installer
                         UseShellExecute = true
                     });
                 }
-
-                ShowMessage(
-                    "PDFWin has been installed successfully!\n\n" +
-                    "• System tray icon next to the taskbar clock.\n" +
-                    "• Global shortcut: Win + Alt + P to open or hide the window.\n" +
-                    "• Context menu: Right-click any image, PDF or folder and select 'Create PDF' directly in the Windows 11 main menu.",
-                    "PDFWin - Installation Completed",
-                    false,
-                    silent);
             }
             catch (Exception ex)
             {
@@ -441,6 +425,132 @@ namespace PDFWin.Installer
             catch { }
         }
 
+        private static void InstallCertificateAndEnableSideloading(string certPath)
+        {
+            try
+            {
+                if (File.Exists(certPath))
+                {
+                    var cert = new X509Certificate2(certPath);
+                    using (var rootStore = new X509Store(StoreName.Root, StoreLocation.LocalMachine))
+                    {
+                        rootStore.Open(OpenFlags.ReadWrite);
+                        rootStore.Add(cert);
+                    }
+                    using (var trustedStore = new X509Store(StoreName.TrustedPeople, StoreLocation.LocalMachine))
+                    {
+                        trustedStore.Open(OpenFlags.ReadWrite);
+                        trustedStore.Add(cert);
+                    }
+                }
+
+                using (var unlockKey = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock"))
+                {
+                    if (unlockKey != null)
+                    {
+                        unlockKey.SetValue("AllowAllTrustedApps", 1, RegistryValueKind.DWord);
+                        unlockKey.SetValue("AllowDevelopmentWithoutDevLicense", 1, RegistryValueKind.DWord);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private static void EnsureCertificateTrusted(string targetDir)
+        {
+            try
+            {
+                string certPath = Path.Combine(targetDir, "PDFWinCert.cer");
+                if (!File.Exists(certPath)) return;
+
+                bool alreadyTrusted = false;
+                try
+                {
+                    var cert = new X509Certificate2(certPath);
+                    using (var store = new X509Store(StoreName.Root, StoreLocation.LocalMachine))
+                    {
+                        store.Open(OpenFlags.ReadOnly);
+                        var matches = store.Certificates.Find(X509FindType.FindByThumbprint, cert.Thumbprint, false);
+                        if (matches != null && matches.Count > 0)
+                        {
+                            alreadyTrusted = true;
+                        }
+                    }
+                }
+                catch { }
+
+                if (alreadyTrusted) return;
+
+                string selfPath = Process.GetCurrentProcess().MainModule != null
+                    ? Process.GetCurrentProcess().MainModule.FileName
+                    : Assembly.GetExecutingAssembly().Location;
+
+                if (string.IsNullOrEmpty(selfPath) || !File.Exists(selfPath))
+                {
+                    selfPath = Path.Combine(targetDir, "Uninstall.exe");
+                }
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = selfPath,
+                    Arguments = string.Format("--install-cert \"{0}\"", certPath),
+                    Verb = "runas",
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    UseShellExecute = true
+                };
+
+                using (var proc = Process.Start(psi))
+                {
+                    if (proc != null)
+                    {
+                        proc.WaitForExit(15000);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private static void RegisterModernSparsePackage(string targetDir)
+        {
+            try
+            {
+                string msixPath = Path.Combine(targetDir, "PDFWinSparse.msix");
+                string manifestPath = Path.Combine(targetDir, "AppxManifest.xml");
+
+                if (File.Exists(msixPath))
+                {
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "powershell.exe",
+                        Arguments = string.Format(
+                            "-NoProfile -WindowStyle Hidden -Command \"try {{ Add-AppxPackage -Path '{0}' -ExternalLocation '{1}' -ForceApplicationShutdown -ErrorAction Stop }} catch {{ if (Test-Path '{2}') {{ Add-AppxPackage -Register '{2}' -ExternalLocation '{1}' -ForceApplicationShutdown }} }}\"",
+                            msixPath, targetDir, manifestPath),
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    using (var p = Process.Start(psi))
+                    {
+                        if (p != null) p.WaitForExit(10000);
+                    }
+                }
+                else if (File.Exists(manifestPath))
+                {
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = "powershell.exe",
+                        Arguments = string.Format("-NoProfile -WindowStyle Hidden -Command \"Add-AppxPackage -Register '{0}' -ExternalLocation '{1}' -ForceApplicationShutdown\"", manifestPath, targetDir),
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    using (var p = Process.Start(psi))
+                    {
+                        if (p != null) p.WaitForExit(8000);
+                    }
+                }
+            }
+            catch { }
+        }
+
         private static void ApplyLzxCompression(string targetDir)
         {
             try
@@ -508,7 +618,7 @@ namespace PDFWin.Installer
                     if (key == null) return;
 
                     key.SetValue("DisplayName", "PDFWin");
-                    key.SetValue("DisplayVersion", "1.5.0");
+                    key.SetValue("DisplayVersion", "1.5.1");
                     key.SetValue("Publisher", "Manuel Contrera");
                     key.SetValue("DisplayIcon", string.Format("{0},0", targetExe));
                     key.SetValue("InstallLocation", targetDir);
