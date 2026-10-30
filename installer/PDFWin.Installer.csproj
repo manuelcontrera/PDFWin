@@ -1,23 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <RootNamespace>PDFWin.Installer</RootNamespace>
     <ApplicationIcon>..\Assets\AppIcon.ico</ApplicationIcon>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <ApplicationManifest>installer.manifest</ApplicationManifest>
+    <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>PDFWin-Setup</AssemblyName>
-    <Version>1.1.0</Version>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.0</FileVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="app.zip" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="app.tar.xz" LogicalName="PDFWin.Installer.app.tar.xz" Condition="Exists('app.tar.xz')" />
+    <EmbeddedResource Include="Uninstall.bin" LogicalName="PDFWin.Installer.Uninstall.bin" Condition="Exists('Uninstall.bin')" />
   </ItemGroup>
 </Project>

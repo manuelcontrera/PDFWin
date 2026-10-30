@@ -49,10 +49,49 @@
 
   <!-- Publish Properties -->
   <PropertyGroup>
-    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishReadyToRun>False</PublishReadyToRun>
     <PublishTrimmed>False</PublishTrimmed>
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+    <DebugSymbols Condition="'$(Configuration)' == 'Release'">false</DebugSymbols>
   </PropertyGroup>
+
+  <!-- Strip unused AI/ML/Search/Widgets/Debugger DLLs after Publish -->
+  <Target Name="RemoveUnusedPublishBloat" AfterTargets="EnsurePriInPublish">
+    <ItemGroup>
+      <_UnusedPublishFiles Include="$(PublishDir)onnxruntime.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)DirectML.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.ML.OnnxRuntime.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.Asg.SemanticIndex.*.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.Windows.AI.*.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.Windows.AI.*.winmd" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.Windows.Search*.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.Windows.Search*.winmd" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.Windows.Widgets*.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.Windows.Widgets*.winmd" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.Windows.Workloads*.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)PerceptiveStreaming.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)NPUDetect.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.DiaSymReader.Native.*.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)mscordaccore*.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)mscordbi.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)createdump.exe" />
+      <_UnusedPublishFiles Include="$(PublishDir)RestartAgent.exe" />
+      <_UnusedPublishFiles Include="$(PublishDir)PdfSharp.Charting.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)PdfSharp.Snippets.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)PdfSharp.WPFonts.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)PdfSharp.Quality.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.Windows.Workloads.pri" />
+      <_UnusedPublishFiles Include="$(PublishDir)workloads*.json" />
+      <_UnusedPublishFiles Include="$(PublishDir)*.winmd" />
+      <_UnusedPublishFiles Include="$(PublishDir)DwmSceneI.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.UI.Xaml.Phone.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)Microsoft.Web.WebView2.Core.Projection.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)System.Reflection.Metadata.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)System.Collections.Immutable.dll" />
+      <_UnusedPublishFiles Include="$(PublishDir)$(TargetName).pri" Condition="Exists('$(PublishDir)resources.pri')" />
+    </ItemGroup>
+    <Delete Files="@(_UnusedPublishFiles)" TreatErrorsAsWarnings="true" />
+  </Target>
 
   <!-- Guarantee PRI files are generated as resources.pri and always present in TargetDir & PublishDir -->
   <Target Name="EnsurePriInPublish" AfterTargets="Publish">

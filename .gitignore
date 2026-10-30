@@ -32,6 +32,8 @@ PDFWin_App/
 PDFWin_App_ToDelete/
 release/
 installer/app.zip
+installer/app.tar.xz
+installer/Uninstall.bin
 SparsePackage/*.msix
 
 # NuGet
